@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Локальное файловое хранилище</title>
+  <style>
+    /* Основные стили */
+    #drop-zone {
+      border: 2px dashed #ccc;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: #666;
+    }
+    #file-list {
+      margin-top: 20px;
+    }
+    .file-item {
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Локальное файловое хранилище</h1>
+  
+  <div id="drop-zone">Перетащите файлы сюда или выберите через поле ввода</div>
+  
+  <input type="file" id="file-input" multiple>
+  
+  <div>
+    <label>Фильтр по типу файла: <input type="text" id="file-type-filter" placeholder="например, image/jpeg"></label>
+    <label>Фильтр по размеру файла (КБ): <input type="number" id="file-size-filter" placeholder="например, 500"></label>
+    <button id="apply-filter">Применить фильтры</button>
+  </div>
+  
+  <div id="file-list"></div>
+
+
+
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const fileTypeFilter = document.getElementById('file-type-filter');
+    const fileSizeFilter = document.getElementById('file-size-filter');
+    const applyFilterButton = document.getElementById('apply-filter');
+
+    dropZone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropZone.style.backgroundColor = '#f0f0f0';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.style.backgroundColor = '#ffffff';
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropZone.style.backgroundColor = '#ffffff';
+      handleFiles(event.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (event) => {
+      handleFiles(event.target.files);
+    });
+
+    function handleFiles(files) {
+      Array.from(files).forEach(file => {
+        const fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size
+        };
+        saveFileToLocalStorage(fileData);
+      });
+      displayFiles();
+    }
+
+    function saveFileToLocalStorage(file) {
+      let files = JSON.parse(localStorage.getItem('files')) || [];
+      files.push(file);
+      localStorage.setItem('files', JSON.stringify(files));
+    }
+
+    function displayFiles(filteredFiles) {
+      fileList.innerHTML = '';
+      const files = filteredFiles || JSON.parse(localStorage.getItem('files')) || [];
+      files.forEach(file => {
+        const fileItem = document.createElement('div');
+        fileItem.classList.add('file-item');
+        fileItem.textContent = `Название: ${file.name}, Тип: ${file.type}, Размер: ${(file.size / 1024).toFixed(2)} KB`;
+        fileList.appendChild(fileItem);
+      });
+    }
+
+    function filterFiles() {
+      const files = JSON.parse(localStorage.getItem('files')) || [];
+      const typeFilter = fileTypeFilter.value.trim();
+      const sizeFilter = parseFloat(fileSizeFilter.value) * 1024;
+
+      const filteredFiles = files.filter(file => {
+        const typeMatch = typeFilter ? file.type.includes(typeFilter) : true;
+        const sizeMatch = !isNaN(sizeFilter) ? file.size <= sizeFilter : true;
+        return typeMatch && sizeMatch;
+      });
+
+      displayFiles(filteredFiles);
+    }
+    applyFilterButton.addEventListener('click', filterFiles);
+    displayFiles();
+  </script>
+
+
+
+
+</body>
+</html>
